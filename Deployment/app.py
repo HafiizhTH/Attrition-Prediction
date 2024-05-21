@@ -1,7 +1,7 @@
 # Mengimpor library yang diperlukan
 import streamlit as st
 import pandas as pd
-import pickle
+import joblib
 
 # Set the page configuration
 st.set_page_config(
@@ -21,16 +21,17 @@ tab1, tab2 = st.tabs(["Prediksi", "Info"])
 if 'uploaded_data' not in st.session_state:
     st.session_state.uploaded_data = None
 
+# Load model
+df_model = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl"
+model = joblib.load(df_model)
+
 # Example file data
-example_data = {
-    'EmployeeID': [1, 2, 3, 4, 5],
-    'Age': [34, 28, 45, 32, 25],
-    'Gender': ['Male', 'Female', 'Male', 'Female', 'Male'],
-    'Department': ['Sales', 'HR', 'Finance', 'IT', 'Marketing'],
-    'MonthlyIncome': [5000, 6000, 7000, 8000, 9000]
-}
-example_df = pd.DataFrame(example_data)
-example_csv = example_df.to_csv(index=False).encode('utf-8')
+dataset = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/Data_Clean.csv"
+df_sample = pd.read_csv(dataset)
+df_sample = df_sample.sample(50)
+
+# Convert DataFrame to CSV
+csv = df_sample.to_csv(index=False)
 
 with tab1:
     st.header("Mulai Prediksi!")
@@ -39,8 +40,8 @@ with tab1:
     # Download example file
     st.download_button(
         label="Download Example File",
-        data=example_csv,
-        file_name="example_employee_data.csv",
+        data=csv,
+        file_name="example_employee_dataset.csv",
         mime='text/csv'
     )
     
@@ -83,7 +84,7 @@ with tab2:
         st.subheader("Tampilan dari dataset")
         
         # Input for number of rows to display
-        num_rows = st.number_input("Jumlah baris untuk ditampilkan", min_value=1, max_value=len(df), value=5)
+        num_rows = st.number_input("Jumlah baris yang ditampilkan", min_value=1, max_value=len(df), value=5)
         
         # Display the specified number of rows from the dataset
         st.dataframe(df.head(num_rows))
