@@ -76,51 +76,66 @@ with tab1:
             if 'Attrition' in df.columns:
                 df = df.drop(columns=['Attrition'])
             
-            # Load the model from GitHub
-            model_url = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl"
-            response = requests.get(model_url)
-            response.raise_for_status()  # Ensure the request was successful
-            model = pickle.load(BytesIO(response.content))
+            try:
+                # Load the model from GitHub
+                filename = 'https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl'
 
-            # Separate features into numerical and categorical
-            num_features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
-            cat_features = df.select_dtypes(include=['object', 'category']).columns.tolist()
+                # Mendapatkan respons dari URL
+                response = requests.get(filename)
 
-            # Preprocessing pipelines for numerical and categorical features
-            num_pipeline = Pipeline(steps=[
-                ('imputer', SimpleImputer(strategy='median')),
-                ('scaler', StandardScaler())
-            ])
-            
-            cat_pipeline = Pipeline(steps=[
-                ('imputer', SimpleImputer(strategy='most_frequent')),
-                ('onehot', OneHotEncoder(handle_unknown='ignore'))
-            ])
-            
-            preprocessor = ColumnTransformer(
-                transformers=[
-                    ('num', num_pipeline, num_features),
-                    ('cat', cat_pipeline, cat_features)
-                ]
-            )
-            
-            # Apply preprocessing to the data
-            df_processed = preprocessor.fit_transform(df)
+                # Memeriksa apakah respons sukses (kode status 200)
+                if response.status_code == 200:
+                    # Mengunduh model.pkl dari respons konten
+                    model = pickle.loads(response.content)
+                    print("Model berhasil dimuat.")
+                else:
+                    print("Gagal memuat model. Status code:", response.status_code)
 
-            # Predicting with the model
-            predictions = model.predict(df_processed)
-            
-            # Add predictions to the dataframe
-            df['Attrition_Prediction'] = predictions
-            
-            # Filter out the employees predicted to have attrition
-            attrition_employees = df[df['Attrition_Prediction'] == 1]
-            
-            if not attrition_employees.empty:
-                st.subheader("Karyawan yang diprediksi akan mengalami attrition:")
-                st.dataframe(attrition_employees)
-            else:
-                st.info("Tidak terdapat karyawan yang mengalami attrition.")
+                # Separate features into numerical and categorical
+                num_features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+                cat_features = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+                # Preprocessing pipelines for numerical and categorical features
+                num_pipeline = Pipeline(steps=[
+                    ('imputer', SimpleImputer(strategy='median')),
+                    ('scaler', StandardScaler())
+                ])
+                
+                cat_pipeline = Pipeline(steps=[
+                    ('imputer', SimpleImputer(strategy='most_frequent')),
+                    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+                ])
+                
+                preprocessor = ColumnTransformer(
+                    transformers=[
+                        ('num', num_pipeline, num_features),
+                        ('cat', cat_pipeline, cat_features)
+                    ]
+                )
+                
+                # Apply preprocessing to the data
+                df_processed = preprocessor.fit_transform(df)
+
+                # Predicting with the model
+                predictions = model.predict(df_processed)
+                
+                # Add predictions to the dataframe
+                df['Attrition_Prediction'] = predictions
+                
+                # Filter out the employees predicted to have attrition
+                attrition_employees = df[df['Attrition_Prediction'] == 1]
+                
+                if not attrition_employees.empty:
+                    st.subheader("Karyawan yang diprediksi akan mengalami attrition:")
+                    st.dataframe(attrition_employees)
+                else:
+                    st.info("Tidak terdapat karyawan yang mengalami attrition.")
+            except requests.exceptions.RequestException as e:
+                st.error(f"Error downloading the model: {e}")
+            except pickle.UnpicklingError as e:
+                st.error(f"Error unpickling the model: {e}")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
         else:
             st.warning("Silakan upload file terlebih dahulu.")
 
