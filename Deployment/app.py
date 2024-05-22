@@ -1,7 +1,12 @@
-# Mengimpor library yang diperlukan
 import streamlit as st
 import pandas as pd
-import joblib
+import pickle
+import requests
+from io import BytesIO
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
 
 # Set the page configuration
 st.set_page_config(
@@ -12,7 +17,7 @@ st.set_page_config(
 
 # Title and description
 st.title("Prediksi Karyawan")
-st.write("Ini sebuah aplikasi model **Attrition Prediction** yang bertujuan agar dapat membantu Departemen Human Resource dalam pengambilan keputusan.")
+st.write("Ini adalah aplikasi model **Attrition Prediction** yang bertujuan untuk membantu Departemen Human Resource dalam pengambilan keputusan.")
 
 # Tabs for Prediction and Info
 tab1, tab2 = st.tabs(["Prediksi", "Info"])
@@ -21,13 +26,9 @@ tab1, tab2 = st.tabs(["Prediksi", "Info"])
 if 'uploaded_data' not in st.session_state:
     st.session_state.uploaded_data = None
 
-# Load model
-df_model = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl"
-model = joblib.load(df_model)
-
 # Example file data
-dataset = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/Data_Clean.csv"
-df_sample = pd.read_csv(dataset)
+dataset_url = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/Data_Clean.csv"
+df_sample = pd.read_csv(dataset_url)
 df_sample = df_sample.sample(50)
 
 # Convert DataFrame to CSV
@@ -68,10 +69,58 @@ with tab1:
     # Predict button
     if st.button("Predict"):
         if st.session_state.uploaded_data is not None:
-            # Placeholder for prediction logic
             st.info("Proses prediksi dimulai.")
-            # Here you can add the code to perform predictions
-            # For example: predictions = model.predict(df)
+            df = st.session_state.uploaded_data
+
+            # Check and separate 'Attrition' column if it exists
+            if 'Attrition' in df.columns:
+                df = df.drop(columns=['Attrition'])
+            
+            # Load the model from GitHub
+            model_url = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl"
+            response = requests.get(model_url)
+            response.raise_for_status()  # Ensure the request was successful
+            model = pickle.load(BytesIO(response.content))
+
+            # Separate features into numerical and categorical
+            num_features = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+            cat_features = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+            # Preprocessing pipelines for numerical and categorical features
+            num_pipeline = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='median')),
+                ('scaler', StandardScaler())
+            ])
+            
+            cat_pipeline = Pipeline(steps=[
+                ('imputer', SimpleImputer(strategy='most_frequent')),
+                ('onehot', OneHotEncoder(handle_unknown='ignore'))
+            ])
+            
+            preprocessor = ColumnTransformer(
+                transformers=[
+                    ('num', num_pipeline, num_features),
+                    ('cat', cat_pipeline, cat_features)
+                ]
+            )
+            
+            # Apply preprocessing to the data
+            df_processed = preprocessor.fit_transform(df)
+
+            # Predicting with the model
+            predictions = model.predict(df_processed)
+            
+            # Add predictions to the dataframe
+            df['Attrition_Prediction'] = predictions
+            
+            # Filter out the employees predicted to have attrition
+            attrition_employees = df[df['Attrition_Prediction'] == 1]
+            
+            if not attrition_employees.empty:
+                st.subheader("Karyawan yang diprediksi akan mengalami attrition:")
+                st.dataframe(attrition_employees)
+            else:
+                st.info("Tidak terdapat karyawan yang mengalami attrition.")
         else:
             st.warning("Silakan upload file terlebih dahulu.")
 
