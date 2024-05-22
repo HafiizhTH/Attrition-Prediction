@@ -28,7 +28,7 @@ if 'uploaded_data' not in st.session_state:
 # Example file data
 dataset_url = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/Data_Clean.csv"
 df_sample = pd.read_csv(dataset_url)
-df_sample = df_sample.sample(1)
+df_sample = df_sample.sample(20)
 
 # Convert DataFrame ke file CSV
 csv = df_sample.to_csv(index=False)
