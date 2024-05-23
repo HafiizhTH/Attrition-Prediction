@@ -1,5 +1,8 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pickle
 import requests
 from sklearn.preprocessing import StandardScaler, OrdinalEncoder
@@ -13,6 +16,12 @@ st.set_page_config(
     page_icon=":bar_chart:",
     layout="wide"
 )
+
+def generate_palette(series):
+    max_val = series.value_counts().idxmax()
+    min_val = series.value_counts().idxmin()
+    colors = ['#DD5746' if val == min_val else '#FFC470' if val == max_val else '#4793AF' for val in series.unique()]
+    return dict(zip(series.unique(), colors))
 
 # Title and description
 st.title("Attrition Predictionn")
@@ -235,7 +244,6 @@ if page == "Prediksi":
                     
             else:
                 st.warning("Silakan upload file terlebih dahulu.")
-
                 
 # Halaman Informasi karyawan
 elif page == "Informasi Karyawan":
@@ -244,15 +252,41 @@ elif page == "Informasi Karyawan":
     if st.session_state.uploaded_data is not None:
         df = st.session_state.uploaded_data
         
-        st.subheader("Tampilan dari dataset")
+        tab1, tab2 = st.tabs(["Data Deskriptif", "Data Visualisasi"])
         
-        max_rows = len(df)
-        num_rows = st.number_input("Jumlah baris yang ditampilkan", min_value=1, max_value=max_rows, value=min(5, max_rows))
+        with tab1:
+            st.subheader("Tampilan dari dataset")
+            
+            max_rows = len(df)
+            num_rows = st.number_input("Jumlah baris yang ditampilkan", min_value=1, max_value=max_rows, value=min(5, max_rows))
+            
+            st.dataframe(df.head(num_rows))
+            st.subheader("Informasi Kolom")
+            st.write(df.describe(include='all').transpose())
         
-        st.dataframe(df.head(num_rows))
-        st.subheader("Informasi Kolom")
-        st.write(df.describe(include='all').transpose())
-        
+        with tab2:
+            st.subheader("Visualisasi Data")
+            
+            select_col = st.selectbox("Pilih kolom untuk divisualisasikan", df.columns)
+            
+            if pd.api.types.is_numeric_dtype(df[select_col]):
+                st.write(f"Visualisasi Histogram untuk kolom {select_col}")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                sns.histplot(df[select_col], ax=ax, color='#4793AF')
+                
+                st.pyplot(fig)
+            else:
+                st.write(f"Visualisasi Bar Chart untuk kolom {select_col}")
+                fig, ax = plt.subplots(figsize=(10, 5))
+                palette = generate_palette(df[select_col])
+                sns.countplot(y=df[select_col], palette=palette, ax=ax)
+                
+                # Menambahkan anotasi jumlah karyawan dengan jarak
+                for container in ax.containers:
+                    ax.bar_label(container, label_type='edge', padding=5, fontsize=10, color='black', fontweight='bold')
+                
+                st.pyplot(fig)
+                
     else:
         st.info("Upload dataset pada tab Prediksi untuk melihat kontennya di sini.")
 
