@@ -45,7 +45,6 @@ If you want to try using the model to predict employee attrition. [click here](h
 ## Conclusion
 
 Based on data analysis, some of the factors that could potentially affect the attrition rate are:
-- The level of job satisfaction and engagement is too high.
 - Very high rate of employees working overtime.
 - Low monthly income and salary increases.
 
