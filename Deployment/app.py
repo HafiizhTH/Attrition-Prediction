@@ -36,7 +36,7 @@ if 'uploaded_data' not in st.session_state:
     st.session_state.uploaded_data = None
 
 # Example file data
-dataset_url = "https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/Data_Clean.csv"
+dataset_url = "https://raw.githubusercontent.com/HafiizhTH/Attrition-Prediction/main/Data/Data_Clean.csv"
 df_sample = pd.read_csv(dataset_url)
 df_sample = df_sample.sample(20)
 
@@ -92,7 +92,7 @@ if page == "Prediksi":
         if st.button("Predict Single Data", key="predict_single"):
             try:
                 # Load model dari GitHub
-                filename = 'https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl'
+                filename = 'https://raw.githubusercontent.com/HafiizhTH/Attrition-Prediction/main/Data/result_model.pkl'
                 response = requests.get(filename)
                 if response.status_code == 200:
                     model = pickle.loads(response.content)
