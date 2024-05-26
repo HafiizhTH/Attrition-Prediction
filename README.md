@@ -61,7 +61,7 @@ In the Dashboard visualization to be able to analyze employees in the company ja
 
 ## Testing Model
 
-If you want to try using the model to predict employee attrition. [click here](https://attrition-prediction-2024.streamlit.app/)
+If you want to try using the model to predict employee attrition. [click here](https://attrition-prediction.streamlit.app/)
 
 ![image](https://github.com/HafiizhTH/Human_Resources/assets/96015981/b083eb07-1ba8-4c41-a4ae-9ac455c1e75c)
 
