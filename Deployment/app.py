@@ -177,7 +177,7 @@ if page == "Prediksi":
                 df = st.session_state.uploaded_data
                 
                 try:
-                    filename = 'https://raw.githubusercontent.com/HafiizhTH/Human_Resources/main/Data/result_model.pkl'
+                    filename = 'https://raw.githubusercontent.com/HafiizhTH/Attrition-Prediction/main/Data/result_model.pkl'
                     response = requests.get(filename)
                     if response.status_code == 200:
                         model = pickle.loads(response.content)
